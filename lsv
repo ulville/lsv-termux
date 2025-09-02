@@ -1,33 +1,43 @@
-#!/bin/sh
+#!/data/data/com.termux/files/usr/bin/bash
 
-#LSV: List all services within a specified runsvdir service directory.
+#LSV: List services in termux
 #License: GNU GPLv3 or later
 
 #charup='✔'
 #chardown='X'
 
-if (($#<1));then
-cat << EOF
-Usage: $0 [SVDIR]
+[ -z $1 ] && svdir="$SVDIR" || svdir="$1"
 
-List all services within a specified runsvdir service directory.
-Each line follows the format: servicename status PID
-
-Note: For system services, $0 must be run as root to properly function.
-EOF
-exit
-fi
-
-svdir=$1
+echo $svdir
+printf -- '-%.0s' $(seq ${#svdir})
+printf '\n'
 
 list_service()
 {
 local srvname="$(basename $svdir/$1)"
 local srvstat="$(cat $svdir/$srvname/supervise/stat)"
 local srvpid="$(cat $svdir/$srvname/supervise/pid)"
-echo "$srvname $srvstat $srvpid"
+local srvenab="$(test -f $svdir/$srvname/down && printf "disabled" || printf "enabled")"
+color1=""
+color2=""
+if [[ $srvstat == "down" ]]; then
+        color1="\033[31m"
+elif [[ $srvstat == "run" ]]; then
+        color1="\033[01;32m"
+fi
+if [[ $srvenab == "disabled" ]]; then
+        color2="\033[31m"
+elif [[ $srvenab == "enabled" ]]; then
+        color2="\033[01;32m"
+fi
+echo -e "$srvname:$color1$srvstat\033[00m:$color2$srvenab\033[00m:$srvpid"
 }
 
+list_all_services()
+{
 for eachsrv in $(ls $svdir);do
 list_service $eachsrv
 done
+}
+
+list_all_services | column -t -s ':' -N SERVICE,STATE,AUTORUN,PID -O PID,STATE,AUTORUN,SERVICE
