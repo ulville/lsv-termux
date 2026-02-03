@@ -14,10 +14,11 @@ printf '\n'
 
 list_service()
 {
-local srvname="$(basename $svdir/$1)"
-local srvstat="$(cat $svdir/$srvname/supervise/stat)"
-local srvpid="$(cat $svdir/$srvname/supervise/pid)"
-local srvenab="$(test -f $svdir/$srvname/down && printf "disabled" || printf "enabled")"
+local srvpath=$1
+local srvname="${srvpath##*/}"
+local srvstat="$(<$srvpath/supervise/stat)"
+local srvpid="$(<$srvpath/supervise/pid)"
+local srvenab="$([ -f $srvpath/down ] && printf "disabled" || printf "enabled")"
 color1=""
 color2=""
 if [[ $srvstat == "down" ]]; then
@@ -35,7 +36,7 @@ echo -e "$srvname:$color1$srvstat\033[00m:$color2$srvenab\033[00m:$srvpid"
 
 list_all_services()
 {
-for eachsrv in $(ls $svdir);do
+for eachsrv in $svdir/*;do
 list_service $eachsrv
 done
 }
