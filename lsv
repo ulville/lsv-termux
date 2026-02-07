@@ -8,37 +8,42 @@
 
 [ -z $1 ] && svdir="$SVDIR" || svdir="$1"
 
-echo $svdir
-printf -- '-%.0s' $(seq ${#svdir})
-printf '\n'
+banner() {
+    echo $svdir
+    printf -- '-%.0s' $(seq ${#svdir})
+    printf '\n'
+}
 
-list_service()
-{
-local srvpath=$1
-local srvname="${srvpath##*/}"
-local srvstat="$(<$srvpath/supervise/stat)"
-local srvpid="$(<$srvpath/supervise/pid)"
-local srvenab="$([ -f $srvpath/down ] && printf "disabled" || printf "enabled")"
-color1=""
-color2=""
-if [[ $srvstat == "down" ]]; then
+list_service() {
+    local srvpath=$1
+    local srvname="${srvpath##*/}"
+    local srvstat="$(<$srvpath/supervise/stat)"
+    local srvpid="$(<$srvpath/supervise/pid)"
+    local srvenab="$([ -f $srvpath/down ] && printf "disabled" || printf "enabled")"
+    color1=""
+    color2=""
+    if [[ $srvstat == "down" ]]; then
         color1="\033[31m"
-elif [[ $srvstat == "run" ]]; then
+    elif [[ $srvstat == "run" ]]; then
         color1="\033[01;32m"
-fi
-if [[ $srvenab == "disabled" ]]; then
+    fi
+    if [[ $srvenab == "disabled" ]]; then
         color2="\033[31m"
-elif [[ $srvenab == "enabled" ]]; then
+    elif [[ $srvenab == "enabled" ]]; then
         color2="\033[01;32m"
-fi
-echo -e "$srvname:$color1$srvstat\033[00m:$color2$srvenab\033[00m:$srvpid"
+    fi
+    echo -e "$srvname:$color1$srvstat\033[00m:$color2$srvenab\033[00m:$srvpid"
 }
 
-list_all_services()
-{
-for eachsrv in $svdir/*;do
-list_service $eachsrv
-done
+list_all_services() {
+    for eachsrv in $svdir/*; do
+        list_service $eachsrv
+    done
 }
 
-list_all_services | column -t -s ':' -N SERVICE,STATE,AUTORUN,PID -O PID,STATE,AUTORUN,SERVICE
+banner
+list_all_services |
+    column -t -s ':' \
+        -N SERVICE,STATE,AUTORUN,PID \
+        -O PID,STATE,AUTORUN,SERVICE
+
